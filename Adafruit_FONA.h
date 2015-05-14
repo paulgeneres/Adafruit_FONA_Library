@@ -42,12 +42,18 @@
 #define FONA_STTONE_INDIANDIALTONE 19
 #define FONA_STTONE_USADIALTONE 20
 
-#define FONA_DEFAULT_TIMEOUT_MS 500
+#define FONA_DEFAULT_TIMEOUT_MS 10000
 
 class Adafruit_FONA : public Stream {
  public:
-  Adafruit_FONA(int8_t r);
+  Adafruit_FONA(uint8_t rst, uint8_t ns, uint8_t ri, uint8_t ps, uint8_t key);
   boolean begin(Stream &port);
+
+  // Pin access
+  uint8_t NSpin();
+  uint8_t RIpin();
+  uint8_t PSpin();
+  void powerToggle();
 
   // Stream
   int available(void);
@@ -79,6 +85,9 @@ class Adafruit_FONA : public Stream {
   boolean setVolume(uint8_t i);
   uint8_t getVolume(void);
   boolean playToolkitTone(uint8_t t, uint16_t len);
+  boolean stopToolkitTone();
+  boolean playTone(uint32_t freq, uint16_t periodOn, uint16_t periodOff, uint32_t duration);
+  boolean stopTone();
   boolean setMicVolume(uint8_t a, uint8_t level);
 
   // FM radio functions.
@@ -123,14 +132,17 @@ class Adafruit_FONA : public Stream {
   boolean PWM(uint16_t period, uint8_t duty = 50);
 
   // Phone calls
+  uint8_t getPhoneActivityStatus(void);
   boolean callPhone(char *phonenum);
   boolean hangUp(void);
   boolean pickUp(void);
+  boolean autoAnswerOn(uint8_t n);
+  boolean autoAnswerOff();
   boolean callerIdNotification(boolean enable, uint8_t interrupt = 0);
   boolean incomingCallNumber(char* phonenum);
 
  private:
-  int8_t _rstpin;
+  uint8_t _rstpin, _nspin, _ripin, _pspin, _keypin;
 
   char replybuffer[255];
   const __FlashStringHelper *apn;
@@ -152,13 +164,18 @@ class Adafruit_FONA : public Stream {
   uint8_t getReply(const __FlashStringHelper *prefix, char *suffix, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
   uint8_t getReply(const __FlashStringHelper *prefix, int32_t suffix, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
   uint8_t getReply(const __FlashStringHelper *prefix, int32_t suffix1, int32_t suffix2, uint16_t timeout); // Don't set default value or else function call is ambiguous.
+  uint8_t getReply(const __FlashStringHelper *prefix, int32_t suffix1, int32_t suffix2, int32_t suffix3, int32_t suffix4, uint16_t timeout); // Don't set default value or else function call is ambiguous.
   uint8_t getReplyQuoted(const __FlashStringHelper *prefix, const __FlashStringHelper *suffix, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
+
+  boolean waitFor(char *expect, uint16_t timeout);
+  boolean waitFor(const __FlashStringHelper *expect, uint16_t timeout);
 
   boolean sendCheckReply(char *send, char *reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
   boolean sendCheckReply(const __FlashStringHelper *send, const __FlashStringHelper *reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
   boolean sendCheckReply(const __FlashStringHelper *prefix, char *suffix, const __FlashStringHelper *reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
   boolean sendCheckReply(const __FlashStringHelper *prefix, int32_t suffix, const __FlashStringHelper *reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
   boolean sendCheckReply(const __FlashStringHelper *prefix, int32_t suffix, int32_t suffix2, const __FlashStringHelper *reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
+  boolean sendCheckReply(const __FlashStringHelper *prefix, int32_t suffix, int32_t suffix2, int32_t suffix3, int32_t suffix4, const __FlashStringHelper *reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
   boolean sendCheckReplyQuoted(const __FlashStringHelper *prefix, const __FlashStringHelper *suffix, const __FlashStringHelper *reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
 
 
